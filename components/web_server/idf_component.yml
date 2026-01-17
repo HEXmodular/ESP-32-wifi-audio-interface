@@ -1,0 +1,5 @@
+dependencies:
+  # Зависимость от клиента WebSocket из реестра Espressif
+  espressif/esp_websocket_client: '*' # Использует последнюю версию
+  #espressif/esp_mdns: "*" # Использует последнюю версию
+  espressif/mdns: '*'

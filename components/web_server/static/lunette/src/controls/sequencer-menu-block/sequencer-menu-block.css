@@ -1,0 +1,39 @@
+.sequencer-menu-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.block-selector,
+.parameter-selector {
+    width: 100%;
+}
+
+.envelope-params {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-unit-0);
+}
+
+.duration-params {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-unit-0);
+}
+
+
+.block-selector .logic-block-control,
+.parameter-selector .logic-block-control {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.block-selector .logic-block-btn,
+.parameter-selector .logic-block-btn {
+    font-size: 12px;
+    padding: 12px 2px;
+}

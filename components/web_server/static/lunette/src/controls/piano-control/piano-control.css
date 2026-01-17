@@ -1,0 +1,170 @@
+
+
+.piano-control {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  user-select: none;
+  position: relative;
+  display: flex;
+  gap: 8px;
+
+  --piano-key-height: 90px;
+}
+
+.octave-selector {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.octave-button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.octave-button.active {
+  background: #e0e0e0;
+  border-color: #999;
+}
+
+.piano-keys {
+  display: flex;
+  position: relative;
+  height: 120px;
+  min-width: max-content;
+  margin-bottom: 4px;
+}
+
+.piano-key {
+  position: relative;
+  height: 100%;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.white-key {
+  width: 40px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 0 0 4px 4px;
+  z-index: 1;
+}
+
+.black-key {
+  width: 24px;
+  height: 70%;
+  background: transparent;
+  border: 1px solid #666;
+  border-radius: 0 0 4px 4px;
+  margin-left: -12px;
+  margin-right: -12px;
+  background-color: #fff;
+  z-index: 2;
+}
+
+.piano-key.active {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color-dark);
+}
+
+.black-key.active {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color-dark);
+}
+
+.octave-label {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #666;
+}
+
+.octave-scrollbar {
+  width: 24px;
+  height: 120px;
+  overflow-y: auto;
+  background: #f5f5f5;
+  border-radius: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color-light) #f5f5f5;
+}
+
+.octave-scrollbar.two-octaves {
+  height: 240px;
+}
+
+.octave-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.octave-scrollbar::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.octave-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color-light);
+  border-radius: 4px;
+  border: 2px solid #f5f5f5;
+}
+
+.octave-markers {
+  display: flex;
+  flex-direction: column;
+}
+
+.octave-marker {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--font-color);
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.octave-marker.active {
+  background: var(--primary-color-light);
+  /* color: var(--primary-color); */
+  font-weight: bold;
+}
+
+/* Mobile optimization */
+@media (max-width: 320px) {
+  .white-key {
+    width: 36px;
+  }
+  
+  .black-key {
+    width: 20px;
+    margin-left: -10px;
+    margin-right: -10px;
+  }
+  
+  .piano-keys {
+    height: var(--piano-key-height);
+  }
+  
+  .octave-scrollbar {
+    width: 20px;
+    height: var(--piano-key-height);
+  }
+  
+  .octave-scrollbar.two-octaves {
+    height: calc(2 * var(--piano-key-height));
+  }
+  
+  .octave-marker {
+    height: var(--piano-key-height);
+  }
+}

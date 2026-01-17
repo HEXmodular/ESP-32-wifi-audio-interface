@@ -1,0 +1,14 @@
+.block-container {
+    gap: 6px;
+}
+
+.error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 12px;
+    margin: 8px;
+    border-radius: 4px;
+    border: 1px solid #ef9a9a;
+    font-size: 14px;
+    text-align: center;
+}

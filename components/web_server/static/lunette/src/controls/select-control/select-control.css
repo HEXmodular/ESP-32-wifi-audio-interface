@@ -1,0 +1,44 @@
+/* LogicBlockControl styles */
+/* .logic-block-control {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    font-size: 16px;
+} */
+
+.logic-block-btn {
+    background: #eee;
+    color: #555;
+    border: 0;
+    /* font-size: 16px; */
+    font-weight: 600;
+    padding: 14px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    min-width: 100%;
+    font-size: inherit;
+}
+
+.logic-block-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+    /* border-color: #388e3c;
+    box-shadow: 0 2px 10px rgba(76,175,80,0.15); */
+}
+.logic-block-btn:active {
+    filter: brightness(0.95);
+}
+
+.select-control-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.select-control-label {
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+

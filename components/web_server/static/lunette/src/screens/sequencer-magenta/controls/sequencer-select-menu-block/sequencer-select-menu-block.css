@@ -1,0 +1,14 @@
+.sequencer-select-menu-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.other-parameters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-unit-1);
+}

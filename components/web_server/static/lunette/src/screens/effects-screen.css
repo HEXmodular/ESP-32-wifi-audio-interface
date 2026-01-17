@@ -1,0 +1,41 @@
+.effects-screen {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.effects-screen h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.reverb-section {
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.reverb-section h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.reverb-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .reverb-controls {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .reverb-controls {
+        grid-template-columns: 1fr;
+    }
+} 

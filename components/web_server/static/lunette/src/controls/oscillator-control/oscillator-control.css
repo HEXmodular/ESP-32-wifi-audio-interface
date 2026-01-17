@@ -1,0 +1,19 @@
+/* Oscillator Control */
+.oscillator-control {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0;
+}
+
+.oscillator-control .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.oscillator-control-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}

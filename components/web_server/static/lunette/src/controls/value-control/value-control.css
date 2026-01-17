@@ -1,0 +1,170 @@
+.value-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+}
+
+.control-container {
+    /* position: relative; */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slider-button {
+    width: 100%;
+}
+
+.slider-button.active {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    background: white;
+    cursor: pointer;
+    margin-left: -20px;
+    margin-top: -20px;
+    color: transparent;
+    /* display: flex;
+    align-items: center;
+    justify-content: center; */
+    font-size: 14px;
+    transition: all 0.2s ease;
+    z-index: 2;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.slider-button.over-handle {
+    background: transparent;
+    border: 0;
+    /* color: white; */
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.overlay.over-handle {
+    background: rgb(255 255 255 / 90%);
+}
+
+.slider-container {
+    /* position: relative; */
+    width: 300px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slider-track {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    color: #333;
+}
+
+.slider-handle {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    /* background: #007bff; */
+    border-radius: 50%;
+    transform-origin: center;
+    transition: all 0.2s ease;
+    border: 1px dashed #333;
+}
+
+.slider-handle.over-handle {
+    background: var(--secondary-color);
+    width: 20px;
+    height: 20px;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.value-control.active {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.value-display {
+    font-family: monospace;
+    font-size: 1.2em;
+    color: #333;
+    min-width: 60px;
+    text-align: right;
+    padding: 0 10px;
+}
+
+.value-control label {
+    font-size: 14px;
+    color: #333;
+    margin-left: 4px;
+    padding-top: 6px;
+}
+
+.value-control .control-container {
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+.value-control .value-display {
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    color: #333;
+}
+
+.value-control .value-slider {
+    height: 4px;
+    background-color: #ddd;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+}
+
+.value-control .value-slider::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #666;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: background-color 0.2s;
+}
+
+.value-control .value-slider.active::after {
+    background-color: #333;
+}

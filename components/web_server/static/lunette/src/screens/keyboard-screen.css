@@ -1,0 +1,5 @@
+.keyboard-screen {
+  display: flex;
+  gap: var(--spacing-unit-2);
+flex-direction: column;
+}
