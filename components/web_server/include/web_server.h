@@ -71,4 +71,4 @@ esp_err_t web_server_deinit(void);
 // отправляет буфер с выходными значениями на клиента
 void web_server_send_samples_to_client(uint8_t *payload);
 
-void web_server_register_ws_recv_frame_callback(void (*callback)(uint16_t *));
+void web_server_register_ws_recv_frame_callback(void (*callback)(int16_t *));

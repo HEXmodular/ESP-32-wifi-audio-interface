@@ -20,7 +20,7 @@ void adc_continuous_buffer_ready_callback(uint8_t* samples){
 }
 
 // получен буфер с данными от веб-сервера, отправляем его в sdm-каналы
-void web_server_ws_recv_frame_callback(uint16_t* samples){
+void web_server_ws_recv_frame_callback(int16_t* samples){
     sdm_continuous_write_to_channels(samples);
 }
 

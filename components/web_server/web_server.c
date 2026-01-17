@@ -21,7 +21,7 @@ static int ws_req_fd = 0;
 static bool ws_connected = false;     // Add connection state tracking
 static uint32_t last_ws_activity = 0; // Track last successful WebSocket activity
 // Callback function pointer
-static void (*ws_recv_frame_callback)(uint16_t* samples) = NULL;
+static void (*ws_recv_frame_callback)(int16_t *samples) = NULL;
 // WebSocket frame receive buffer
 // #define WS_BUFFER_SIZE 1024
 // static uint8_t ws_buffer[WS_BUFFER_SIZE];
@@ -128,7 +128,7 @@ void web_server_send_samples_to_client(uint8_t *payload)
     // }
 }
 
-void web_server_register_ws_recv_frame_callback(void (*callback)(uint16_t *))
+void web_server_register_ws_recv_frame_callback(void (*callback)(int16_t *))
 {
     ESP_LOGI(TAG, "Registering WebSocket receive frame callback");
     ws_recv_frame_callback = callback;
@@ -204,15 +204,22 @@ static esp_err_t ws_handler(httpd_req_t *req)
 
     if (ws_pkt.len > 0)
     {
-        uint16_t *buf = calloc(1, ws_pkt.len);
+        uint8_t *buf = calloc(1, ws_pkt.len);
+        int16_t *dst = calloc(1, ws_pkt.len /2);
+
         ws_pkt.payload = buf;
         // 2. Читаем сами данные
         httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
 
         if (ws_pkt.type == HTTPD_WS_TYPE_BINARY)
         {
-            // Работа с бинарными данными в buf
-            ws_recv_frame_callback(ws_pkt.payload);
+            // преобразование потока байт в массив int16_t
+            for (int i = 0; i < ws_pkt.len / 2; i++)
+            {
+                // [i*2] - старший байт, [i*2+1] - младший
+                dst[i] = ((int16_t)ws_pkt.payload[i * 2] << 8) | ws_pkt.payload[i * 2 + 1];
+            }
+            ws_recv_frame_callback(dst);
         }
         free(buf);
     }
