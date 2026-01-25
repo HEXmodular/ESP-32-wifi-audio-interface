@@ -345,26 +345,6 @@ httpd_handle_t start_webserver(void)
     return server;
 }
 
-// Add periodic connection check task
-static void check_ws_connection(void *arg)
-{
-    while (1)
-    {
-        if (ws_connected && ws_req_hd && ws_req_fd > 0)
-        {
-            uint32_t current_time = esp_timer_get_time() / 1000;
-            // If no activity for more than 5 seconds, consider connection dead
-            if (current_time - last_ws_activity > 5000)
-            {
-                ESP_LOGI(TAG, "WebSocket connection timeout");
-                ws_connected = false;
-                ws_req_hd = NULL;
-                ws_req_fd = 0;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Check every second
-    }
-}
 
 // Initialize and start web server
 esp_err_t web_server_init(void)
@@ -391,9 +371,6 @@ esp_err_t web_server_init(void)
         ESP_LOGE(TAG, "Failed to start web server");
         return ESP_FAIL;
     }
-
-    // Create task to check WebSocket connection
-    xTaskCreate(check_ws_connection, "ws_check", 2048, NULL, 5, NULL);
 
     return ESP_OK;
 }

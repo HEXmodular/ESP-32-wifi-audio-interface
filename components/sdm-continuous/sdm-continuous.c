@@ -17,9 +17,9 @@
 #define SIGMA_DELTA_GPIO_NUMS {23, 22, 21, 19} // Select GPIOs for sigma-delta output pins
 #define SIGMA_DELTA_GPIO_LEN (4)
 #define OVER_SAMPLE_RATE (80 * MHZ) // 10 MHz over sample rate (частота для SDM канала)
-#define TIMER_RESOLUTION (2400 * KHZ) // timer counting resolution
+#define TIMER_RESOLUTION (48 * KHZ) // timer counting resolution
 #define CALLBACK_INTERVAL_US (1000000 / TIMER_RESOLUTION)  // 100 us interval of each timer callback
-#define ALARM_COUNT 100            //(CALLBACK_INTERVAL_US * (TIMER_RESOLUTION / MHZ)) // настройка таймера
+#define ALARM_COUNT 1            //(CALLBACK_INTERVAL_US * (TIMER_RESOLUTION / MHZ)) // настройка таймера
 
 #define FULL_BUF (1 * 256 * 4 * 2) // x2 two half ping-pong buffers
 #define HALF_BUF (FULL_BUF / 2)
