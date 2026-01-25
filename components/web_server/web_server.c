@@ -11,7 +11,8 @@
 #include "cJSON.h"
 #include "esp_timer.h"
 
-#define OUTPUT_SAMPLE_BUFFER_SIZE 256
+#define OUTPUT_SAMPLE_BUFFER_SIZE (2048)
+#define MAX_WS_PAYLOAD (1 * 1024 * 2)
 
 static const char *TAG = "web_server";
 static httpd_handle_t server = NULL;
@@ -22,13 +23,10 @@ static bool ws_connected = false;     // Add connection state tracking
 static uint32_t last_ws_activity = 0; // Track last successful WebSocket activity
 // Callback function pointer
 static void (*ws_recv_frame_callback)(int16_t *samples) = NULL;
-// WebSocket frame receive buffer
-// #define WS_BUFFER_SIZE 1024
-// static uint8_t ws_buffer[WS_BUFFER_SIZE];
 
-// static output_handle_t output = NULL;
+// todo переименовать
+static int16_t dst[MAX_WS_PAYLOAD / 2];
 
-// execute_buffer_ready_callback
 
 // lunette.local to connect to the web server
 void start_mdns_service()
@@ -82,26 +80,6 @@ void web_server_send_samples_to_client(uint8_t *payload)
         ws_req_fd = 0;
         return;
     }
-
-    // if (!output)
-    // {
-    //     ESP_LOGE(TAG, "Output instance not found");
-    //     return;
-    // }
-
-    // if (!output_samples_ready(output))
-    // {
-    //     ESP_LOGD(TAG, "Samples are not ready");
-    //     return;
-    // }
-
-    // int8_t samples[OUTPUT_SAMPLE_BUFFER_SIZE];
-    // esp_err_t err = output_get_samples(output, samples, OUTPUT_SAMPLE_BUFFER_SIZE);
-    // if (err != ESP_OK)
-    // {
-    //     ESP_LOGE(TAG, "Failed to get samples: %d", err);
-    //     return;
-    // }
 
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
@@ -161,18 +139,6 @@ static esp_err_t ws_handler(httpd_req_t *req)
             ws_connected = true;
             last_ws_activity = esp_timer_get_time() / 1000;
             ESP_LOGI(TAG, "Handshake done, the new connection was opened");
-
-            // output = output_get_instance();
-            // if (!output)
-            // {
-            //     ESP_LOGE(TAG, "Failed to get output instance");
-            //     ws_connected = false;
-            //     ws_req_hd = NULL;
-            //     ws_req_fd = 0;
-            //     return ESP_FAIL;
-            // }
-
-            // output_register_buffer_ready_callback(&send_samples_to_client);
             ESP_LOGI(TAG, "Buffer ready callback registered");
         }
         else
@@ -187,25 +153,40 @@ static esp_err_t ws_handler(httpd_req_t *req)
     }
 
     // Handle WebSocket close
-    if (req->method == HTTP_DELETE)
-    {
-        ESP_LOGI(TAG, "WebSocket connection closed");
-        ws_connected = false;
-        ws_req_hd = NULL;
-        ws_req_fd = 0;
-        return ESP_OK;
-    }
+    // if (req->method == HTTP_DELETE)
+    // {
+    // ESP_LOGI(TAG, "WebSocket connection closed");
+    // ws_connected = false;
+    // ws_req_hd = NULL;
+    // ws_req_fd = 0;
+    //     return ESP_OK;
+    // }
 
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+    // ESP_LOGI(TAG, "ws_recv_frame_callback");
 
-    // 1. Получаем длину кадра --------------------------------------------------------------------------------------------------------------
-    httpd_ws_recv_frame(req, &ws_pkt, 0);
+    // 1. Сначала узнаем только длину и тип кадра
+    esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to get frame len: %d", ret);
+        return ret;
+    }
+
+    if (ws_pkt.type == HTTPD_WS_TYPE_PONG)
+    {
+        ESP_LOGI(TAG, "HTTPD_WS_TYPE_PONG");
+        return ESP_OK; // Игнорируем или логируем
+    }
 
     if (ws_pkt.len > 0)
     {
         uint8_t *buf = calloc(1, ws_pkt.len);
-        int16_t *dst = calloc(1, ws_pkt.len /2);
+        if (ws_pkt.len != MAX_WS_PAYLOAD)
+        {
+            ESP_LOGW(TAG, "WebSocket payload length %d exceeds maximum %d", ws_pkt.len, MAX_WS_PAYLOAD);
+        }
 
         ws_pkt.payload = buf;
         // 2. Читаем сами данные
@@ -216,8 +197,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
             // преобразование потока байт в массив int16_t
             for (int i = 0; i < ws_pkt.len / 2; i++)
             {
-                // [i*2] - старший байт, [i*2+1] - младший
-                dst[i] = ((int16_t)ws_pkt.payload[i * 2] << 8) | ws_pkt.payload[i * 2 + 1];
+                //[i*2] - старший байт, [i*2+1] - младший
+                dst[i] = ((int16_t)(ws_pkt.payload[i * 2] << 8)) | ws_pkt.payload[i * 2 + 1];
             }
             ws_recv_frame_callback(dst);
         }
@@ -230,102 +211,11 @@ static esp_err_t ws_handler(httpd_req_t *req)
 // Helper function to send file content
 static esp_err_t send_file_content(httpd_req_t *req, const char *file_path)
 {
-    ESP_LOGD(TAG, "Opening file: %s", file_path);
-
-    // extern const unsigned char index_html_start[] asm("_binary_index_html_start");
-    // extern const unsigned char index_html_end[] asm("_binary_index_html_end");
-    // extern const unsigned char index_js_start[] asm("_binary_index_js_start");
-    // extern const unsigned char index_js_end[] asm("_binary_index_js_end");
-    // extern const unsigned char index_css_start[] asm("_binary_index_css_start");
-    // extern const unsigned char index_css_end[] asm("_binary_index_css_end");
-    // extern const unsigned char audio_worklet_js_start[] asm("_binary_audio_worklet_js_start");
-    // extern const unsigned char audio_worklet_js_end[] asm("_binary_audio_worklet_js_end");
-    // extern const unsigned char vite_svg_start[] asm("_binary_vite_svg_start");
-    // extern const unsigned char vite_svg_end[] asm("_binary_vite_svg_end");
-
-    // const unsigned char *start = NULL;
-    // const unsigned char *end = NULL;
     esp_err_t err = ESP_OK;
-
-    // // Determine which embedded file to serve
-    // if (strcmp(file_path, "index.html") == 0)
-    // {
-    //     start = index_html_start;
-    //     end = index_html_end;
-    //     httpd_resp_set_type(req, "text/html");
-    // }
-    // else if (strcmp(file_path, "index.js") == 0)
-    // {
-    //     start = index_js_start;
-    //     end = index_js_end;
-    //     httpd_resp_set_type(req, "application/javascript");
-    // }
-    // else if (strcmp(file_path, "index.css") == 0)
-    // {
-    //     start = index_css_start;
-    //     end = index_css_end;
-    //     httpd_resp_set_type(req, "text/css");
-    // }
-    // else if (strcmp(file_path, "audio-worklet.js") == 0)
-    // {
-    //     start = audio_worklet_js_start;
-    //     end = audio_worklet_js_end;
-    //     httpd_resp_set_type(req, "application/javascript");
-    // }
-    // else if (strcmp(file_path, "vite.svg") == 0)
-    // {
-    //     start = vite_svg_start;
-    //     end = vite_svg_end;
-    //     httpd_resp_set_type(req, "image/svg+xml");
-    // }
-    // else
-    // {
-    //     ESP_LOGE(TAG, "File not found: %s", file_path);
-    //     return ESP_FAIL;
-    // }
-    // // Send the file content
-    // ESP_LOGD(TAG, "File found");
-    // if (start && end)
-    // {
-    //     size_t file_size = end - start;
-    //     ESP_LOGD(TAG, "File size: %zu bytes", file_size);
-    //     err = httpd_resp_send(req, (const char *)start, file_size);
-    //     if (err != ESP_OK)
-    //     {
-    //         ESP_LOGE(TAG, "Error sending file: %s", esp_err_to_name(err));
-    //     }
-    // }
-    // else
-    // {
-    //     ESP_LOGE(TAG, "File content not found");
-    //     err = ESP_FAIL;
-    // }
 
     return err;
 }
 
-// Handler for root path
-// static esp_err_t root_handler(httpd_req_t *req)
-// {
-//     ESP_LOGD(TAG, "GET /");
-//     ESP_LOGD(TAG, "Request headers:");
-
-//     // Set response headers
-//     httpd_resp_set_type(req, "text/html");
-//     httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store, must-revalidate");
-//     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-//     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-//     // Send index.html
-//     ESP_LOGD(TAG, "Sending index.html");
-//     esp_err_t err = send_file_content(req, "index.html");
-//     if (err != ESP_OK)
-//     {
-//         ESP_LOGE(TAG, "Failed to send index.html: %s", esp_err_to_name(err));
-//     }
-//     return err;
-// }
 
 // Обработчик для OPTIONS запросов к корневому URL
 // возможно не нужен
@@ -424,65 +314,21 @@ static bool uri_match_fn(const char *reference_uri, const char *uri_to_match, si
 // Start web server with custom configuration
 httpd_handle_t start_webserver(void)
 {
-    // httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    // config.lru_purge_enable = true;
-    // config.uri_match_fn = uri_match_fn;  // Set our custom URI matching function
-    // config.max_open_sockets = 4;  // Allow multiple WebSocket connections
-
-    // ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.uri_match_fn = uri_match_fn; // Set our custom URI matching function
+    config.max_open_sockets = 1;        // Allow multiple WebSocket connections
 
     esp_err_t err;
 
-    httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
-    // conf.httpd.max_open_sockets = max_clients;
-    // conf.httpd.global_user_ctx = keep_alive;
-    // conf.httpd.open_fn = wss_open_fd;
-    // conf.httpd.close_fn = wss_close_fd;
-    conf.httpd.uri_match_fn = uri_match_fn; // Set our custom URI matching function
-    conf.httpd.max_uri_handlers = 16;       // Increase maximum number of URI handlers
-    conf.httpd.max_open_sockets = 7;        // Increase maximum number of open sockets
+    // Regular HTTP server
+    err = httpd_start(&server, &config);
 
-    extern const unsigned char certificate_pem_start[] asm("_binary_certificate_pem_start");
-    extern const unsigned char certificate_pem_end[] asm("_binary_certificate_pem_end");
-    size_t cert_len = certificate_pem_end - certificate_pem_start;
-    conf.servercert = certificate_pem_start;
-    conf.servercert_len = cert_len;
-
-    extern const unsigned char private_key_pem_start[] asm("_binary_private_key_pem_start");
-    extern const unsigned char private_key_pem_end[] asm("_binary_private_key_pem_end");
-    conf.prvtkey_pem = private_key_pem_start;
-    conf.prvtkey_len = private_key_pem_end - private_key_pem_start;
-
-    esp_err_t ret = httpd_ssl_start(&server, &conf);
-    if (ESP_OK != ret)
+    if (err != ESP_OK)
     {
-        ESP_LOGI(TAG, "Error starting server!");
+        ESP_LOGE(TAG, "Error starting server!");
         return NULL;
     }
 
-    // Regular HTTP server
-    // err = httpd_start(&server, &config);
-
-    // if (err != ESP_OK) {
-    //     ESP_LOGE(TAG, "Error starting server!");
-    //     return NULL;
-    // }
-
-    // URI handler for root path
-    // httpd_uri_t root_uri = {
-    //     .uri = "/",
-    //     .method = HTTP_GET,
-    //     .handler = root_handler,
-    //     .user_ctx = NULL};
-    // httpd_register_uri_handler(server, &root_uri);
-
-    // // Структура для регистрации OPTIONS обработчика
-    // httpd_uri_t root_options_uri = {
-    //     .uri = "/",
-    //     .method = HTTP_OPTIONS,
-    //     .handler = root_options_handler,
-    //     .user_ctx = NULL};
-    // httpd_register_uri_handler(server, &root_options_uri);
 
     // URI handler for WebSocket endpoint
     httpd_uri_t ws_uri = {
@@ -494,22 +340,6 @@ httpd_handle_t start_webserver(void)
     };
     httpd_register_uri_handler(server, &ws_uri);
 
-    // Initialize API registry
-    // err = api_registry_init(server);
-    // if (err != ESP_OK)
-    // {
-    //     ESP_LOGE(TAG, "Error initializing API registry!");
-    //     httpd_stop(server);
-    //     return NULL;
-    // }
-
-    // URI handler for static files
-    // httpd_uri_t static_uri = {
-    //     .uri = "/*",
-    //     .method = HTTP_GET,
-    //     .handler = static_handler,
-    //     .user_ctx = NULL};
-    // httpd_register_uri_handler(server, &static_uri);
 
     ESP_LOGI(TAG, "Server started successfully");
     return server;

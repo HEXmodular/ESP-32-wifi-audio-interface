@@ -30,8 +30,8 @@ static TaskHandle_t s_task_handle;
 static const char *TAG = "ADC-CONTINUOUS";
 
 // Callback function pointer
-static void (*buffer_ready_callback)(uint8_t* samples) = NULL;
-
+static void (*buffer_ready_callback)(uint8_t *samples) = NULL;
+ 
 static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
 {
     // BaseType_t mustYield = pdFALSE;
@@ -45,17 +45,34 @@ static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_c
     uint8_t result[READ_LEN] = {0};
     memset(result, 0xcc, READ_LEN);
 
+    // static int counter = 0;
+
     ret = adc_continuous_read(handle, result, READ_LEN, &ret_num, 0);
     if (ret == ESP_OK)
     {
-        // ESP_LOGI("TASK", "ret is %x, ret_num is %"PRIu32" bytes", ret, ret_num);
+        // counter++;
+        // if (counter >= 4800)
+        // {
+        //     counter = 0;
+        //     ESP_LOGI("TASK", "ret is %x, ret_num is xxx bytes", ret);
+        // }
 
-        adc_continuous_data_t parsed_data[ret_num / SOC_ADC_DIGI_RESULT_BYTES];
-        uint32_t num_parsed_samples = 0;
+        // adc_continuous_data_t parsed_data[ret_num / SOC_ADC_DIGI_RESULT_BYTES];
+        // uint32_t num_parsed_samples = 0;
+
+
+
+
+
+
+        // NB
         // тут возможно не нужно парсить, а отдавать сырые данные сразу клиенту
         // потому что уже упакован канал и сырые данные
-        buffer_ready_callback(result);
+        // buffer_ready_callback(result);
 
+
+
+        
         // esp_err_t parse_ret = adc_continuous_parse_data(handle, result, ret_num, parsed_data, &num_parsed_samples);
         // if (parse_ret == ESP_OK)
         // {
@@ -88,7 +105,6 @@ static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_c
         ESP_LOGW(TAG, "Data parsing timeout: %s", esp_err_to_name(ret));
     }
 
-
     return true;
 }
 
@@ -103,7 +119,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
     ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &handle));
 
     adc_continuous_config_t dig_cfg = {
-        .sample_freq_hz = 20 * 1000,
+        .sample_freq_hz = 48 * 1000,
         .conv_mode = ADC_CONV_MODE,
     };
 
@@ -129,7 +145,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 // output_register_buffer_ready_callback(&send_samples_to_client);
 
 // Function to register buffer ready callback
-void adc_continuous_register_buffer_ready_callback(void (*callback)(uint8_t* samples))
+void adc_continuous_register_buffer_ready_callback(void (*callback)(uint8_t *samples))
 {
     ESP_LOGI(TAG, "Registering buffer ready callback");
     buffer_ready_callback = callback;

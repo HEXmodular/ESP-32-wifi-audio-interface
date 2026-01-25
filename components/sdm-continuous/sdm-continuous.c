@@ -13,31 +13,34 @@
 
 #define KHZ (1000)
 #define MHZ (1000 * 1000)
-#define CONST_PI (3.1416f)                   // Constant of PI, used for calculating the sine wave
-#define SIGMA_DELTA_GPIO_NUMS {23, 22, 1, 3} // Select GPIOs for sigma-delta output pins
+#define CONST_PI (3.1416f)                     // Constant of PI, used for calculating the sine wave
+#define SIGMA_DELTA_GPIO_NUMS {23, 22, 21, 19} // Select GPIOs for sigma-delta output pins
 #define SIGMA_DELTA_GPIO_LEN (4)
-#define OVER_SAMPLE_RATE (10 * MHZ)  // 10 MHz over sample rate (частота для SDM канала) 
-#define TIMER_RESOLUTION (48 * KHZ)   // timer counting resolution
-#define CALLBACK_INTERVAL_US (100)   // 100 us interval of each timer callback
-#define ALARM_COUNT 0 //(CALLBACK_INTERVAL_US * (TIMER_RESOLUTION / MHZ)) // настройка таймера
+#define OVER_SAMPLE_RATE (80 * MHZ) // 10 MHz over sample rate (частота для SDM канала)
+#define TIMER_RESOLUTION (2400 * KHZ) // timer counting resolution
+#define CALLBACK_INTERVAL_US (1000000 / TIMER_RESOLUTION)  // 100 us interval of each timer callback
+#define ALARM_COUNT 100            //(CALLBACK_INTERVAL_US * (TIMER_RESOLUTION / MHZ)) // настройка таймера
 
-#define FULL_BUF 2048 // 256 * 4 * 2
+#define FULL_BUF (1 * 256 * 4 * 2) // x2 two half ping-pong buffers
 #define HALF_BUF (FULL_BUF / 2)
 #define PER_CHANNEL_BUF (HALF_BUF / 4)
 
 static const char *TAG = "SDM-DAC";
 
 // пинг понг буфер для семплов
-int16_t pp_buffer[FULL_BUF];
+static int16_t pp_buffer[FULL_BUF] = {0};
 static uint8_t active_read_half = 0; // Какую половину сейчас читаем (0 или 1)
 
 // Чтение по ОДНОМУ значению
 static int8_t read_next_sample(int channel_num)
 {
-    static uint16_t read_ptr = 0;        // Индекс для чтения по одному
-    int8_t sample = pp_buffer[read_ptr + (active_read_half * HALF_BUF) + (channel_num * PER_CHANNEL_BUF / 4)];
+    static uint16_t read_ptr = 0; // Индекс для чтения по одному
+    int8_t sample = pp_buffer[read_ptr + (active_read_half * HALF_BUF) + (channel_num * PER_CHANNEL_BUF)];
 
-    read_ptr++;
+    if (channel_num == SIGMA_DELTA_GPIO_LEN - 1)
+    {
+        read_ptr++;
+    }
 
     // Если вычитали всю текущую половину — переключаемся
     if (read_ptr >= PER_CHANNEL_BUF)
@@ -107,7 +110,7 @@ static sdm_channel_handle_t *init_sdm(void)
     int sdm_channels[] = SIGMA_DELTA_GPIO_NUMS;
     static sdm_channel_handle_t sdm_chans[SIGMA_DELTA_GPIO_LEN];
 
-    for (int i = 0; i < sizeof(sdm_channels) / sizeof(sdm_channels[0]); i++)
+    for (int i = 0; i < SIGMA_DELTA_GPIO_LEN; i++)
     {
         // ESP_LOGI(TAG, "SDM Channel %d on GPIO %d", i, sdm_channels[i]);
         /* Allocate sdm channel handle */
@@ -133,8 +136,6 @@ void sdm_continuous_write_to_channels(int16_t *samples)
     int16_t write_offset = (active_read_half == 0) ? HALF_BUF : 0;
     memcpy(&pp_buffer[write_offset], samples, HALF_BUF * sizeof(int16_t));
 }
-
-
 
 void sdm_dac_init(void)
 {
