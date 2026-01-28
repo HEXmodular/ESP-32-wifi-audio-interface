@@ -13,6 +13,7 @@
 static void adc_continuous_buffer_ready_callback(uint8_t *samples)
 {
     web_server_send_samples_to_client(samples);
+    // ESP_LOGI("main","adc_continuous_buffer_ready_callback");
 }
 
 // получен буфер с данными от веб-сервера, отправляем его в sdm-каналы

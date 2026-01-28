@@ -12,7 +12,7 @@
 #include "esp_timer.h"
 
 #define OUTPUT_SAMPLE_BUFFER_SIZE (2048)
-#define MAX_WS_PAYLOAD (1 * 1024 * 2)
+#define MAX_WS_PAYLOAD (1024)
 
 static const char *TAG = "web_server";
 static httpd_handle_t server = NULL;
@@ -86,7 +86,7 @@ void web_server_send_samples_to_client(uint8_t *payload)
     ws_pkt.type = HTTPD_WS_TYPE_BINARY;
     ws_pkt.payload = payload; //(uint8_t *)samples;
     ws_pkt.len = OUTPUT_SAMPLE_BUFFER_SIZE;
-    ws_pkt.final = true;
+    // ws_pkt.final = true;
 
     // err =
     httpd_ws_send_frame_async(ws_req_hd, ws_req_fd, &ws_pkt);

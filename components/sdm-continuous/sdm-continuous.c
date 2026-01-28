@@ -21,9 +21,9 @@
 #define CALLBACK_INTERVAL_US (1000000 / TIMER_RESOLUTION)  // 100 us interval of each timer callback
 #define ALARM_COUNT 1            //(CALLBACK_INTERVAL_US * (TIMER_RESOLUTION / MHZ)) // настройка таймера
 
-#define FULL_BUF (1 * 256 * 4 * 2) // x2 two half ping-pong buffers
+#define PER_CHANNEL_BUF (128)
+#define FULL_BUF (PER_CHANNEL_BUF * 4 * 2) // x2 two half ping-pong buffers
 #define HALF_BUF (FULL_BUF / 2)
-#define PER_CHANNEL_BUF (HALF_BUF / 4)
 
 static const char *TAG = "SDM-DAC";
 
