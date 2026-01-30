@@ -36,6 +36,7 @@ void app_main(void)
     sdm_dac_init();
     // регистрируем коллбек для получения данных из веб-сокета
     web_server_register_ws_recv_frame_callback(&web_server_ws_recv_frame_callback);
+    
     wifi_init_softap();
     web_server_init();
 

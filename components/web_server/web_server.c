@@ -11,8 +11,9 @@
 #include "cJSON.h"
 #include "esp_timer.h"
 
-#define OUTPUT_SAMPLE_BUFFER_SIZE (2048)
+#define OUTPUT_SAMPLE_BUFFER_SIZE (1024 / 2) // размер буфера с семплами для отправки клиенту
 #define MAX_WS_PAYLOAD (1024)
+#define CONFIG_HTTPD_MAX_OPEN_SOCKETS (2)
 
 static const char *TAG = "web_server";
 static httpd_handle_t server = NULL;
@@ -26,7 +27,6 @@ static void (*ws_recv_frame_callback)(int16_t *samples) = NULL;
 
 // todo переименовать
 static int16_t dst[MAX_WS_PAYLOAD / 2];
-
 
 // lunette.local to connect to the web server
 void start_mdns_service()
@@ -62,24 +62,66 @@ void start_mdns_service()
     ESP_LOGI(TAG, "MDNS service started successfully");
 }
 
+
+
+
+
+// static uint8_t shared_buffer[512];
+// static _Atomic bool is_busy = false; // Атомарный флаг для защиты
+
+// void fast_broadcast_worker(void *arg) {
+//     httpd_handle_t server = (httpd_handle_t)arg;
+//     int fds[CONFIG_HTTPD_MAX_OPEN_SOCKETS];
+//     size_t clients = CONFIG_HTTPD_MAX_OPEN_SOCKETS;
+
+//     if (httpd_get_client_list(server, &clients, fds) == ESP_OK) {
+//         for (size_t i = 0; i < clients; i++) {
+//             if (httpd_ws_get_fd_info(server, fds[i]) == HTTPD_WS_CLIENT_WEBSOCKET) {
+//                 httpd_ws_frame_t ws_pkt = {
+//                     .payload = shared_buffer,
+//                     .len = 512,
+//                     .type = HTTPD_WS_TYPE_BINARY,
+//                 };
+//                 httpd_ws_send_frame_async(server, fds[i], &ws_pkt);
+//             }
+//         }
+//     }
+//     is_busy = false; // Освобождаем буфер
+// }
+
+// Вызов из высокочастотного потока
+// void send_data_fast(httpd_handle_t server, uint8_t *new_data) {
+//     if (is_busy) return; // Пропускаем кадр, если сервер еще занят
+
+//     is_busy = true;
+//     memcpy(shared_buffer, new_data, 512);
+//     // free(new_data);
+    
+//     if (httpd_queue_work(server, fast_broadcast_worker, server) != ESP_OK) {
+//         is_busy = false;
+//     }
+// }
+
+
+
 // отправляет буфер с выходными значениями на клиента
 void web_server_send_samples_to_client(uint8_t *payload)
 {
-    if (!ws_connected || !ws_req_hd || ws_req_fd <= 0)
-    {
-        ESP_LOGD(TAG, "WebSocket not connected, skipping send");
-        return;
-    }
+    // if (!ws_connected || !ws_req_hd || ws_req_fd <= 0)
+    // {
+    //     ESP_LOGD(TAG, "WebSocket not connected, skipping send");
+    //     return;
+    // }
 
-    // Check if connection is still valid
-    if (httpd_ws_get_fd_info(ws_req_hd, ws_req_fd) != HTTPD_WS_CLIENT_WEBSOCKET)
-    {
-        ESP_LOGD(TAG, "WebSocket connection no longer valid");
-        ws_connected = false;
-        ws_req_hd = NULL;
-        ws_req_fd = 0;
-        return;
-    }
+    // // Check if connection is still valid
+    // if (httpd_ws_get_fd_info(ws_req_hd, ws_req_fd) != HTTPD_WS_CLIENT_WEBSOCKET)
+    // {
+    //     ESP_LOGD(TAG, "WebSocket connection no longer valid");
+    //     ws_connected = false;
+    //     ws_req_hd = NULL;
+    //     ws_req_fd = 0;
+    //     return;
+    // }
 
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
@@ -88,8 +130,9 @@ void web_server_send_samples_to_client(uint8_t *payload)
     ws_pkt.len = OUTPUT_SAMPLE_BUFFER_SIZE;
     // ws_pkt.final = true;
 
-    // err =
+
     httpd_ws_send_frame_async(ws_req_hd, ws_req_fd, &ws_pkt);
+
     // if (err != ESP_OK)
     // {
     //     ESP_LOGE(TAG, "Failed to send WebSocket frame: %d", err);
@@ -104,6 +147,8 @@ void web_server_send_samples_to_client(uint8_t *payload)
     // {
     //     last_ws_activity = esp_timer_get_time() / 1000; // Update last activity timestamp
     // }
+
+    // send_data_fast(server, payload);
 }
 
 void web_server_register_ws_recv_frame_callback(void (*callback)(int16_t *))
@@ -215,7 +260,6 @@ static esp_err_t send_file_content(httpd_req_t *req, const char *file_path)
 
     return err;
 }
-
 
 // Обработчик для OPTIONS запросов к корневому URL
 // возможно не нужен
@@ -329,7 +373,6 @@ httpd_handle_t start_webserver(void)
         return NULL;
     }
 
-
     // URI handler for WebSocket endpoint
     httpd_uri_t ws_uri = {
         .uri = "/ws",
@@ -340,11 +383,9 @@ httpd_handle_t start_webserver(void)
     };
     httpd_register_uri_handler(server, &ws_uri);
 
-
     ESP_LOGI(TAG, "Server started successfully");
     return server;
 }
-
 
 // Initialize and start web server
 esp_err_t web_server_init(void)
