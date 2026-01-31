@@ -28,6 +28,8 @@ static adc_channel_t channel[2] = {ADC_CHANNEL_2, ADC_CHANNEL_3};
 
 static TaskHandle_t s_task_handle;
 static const char *TAG = "ADC-CONTINUOUS";
+static uint8_t adc_data[READ_LEN / 2];
+
 
 // Callback function pointer
 static void (*buffer_ready_callback)(uint8_t *samples) = NULL;
@@ -141,7 +143,8 @@ void adc_processing_task(void *pvParameters)
                 //          parsed_data[3].raw_data,
                 //          (uint8_t)(parsed_data[3].raw_data >> 4));
 
-                buffer_ready_callback(raw_data);
+                memcpy(adc_data, raw_data, num_parsed_samples);
+                buffer_ready_callback(adc_data);
                 free(raw_data);
             }
             else
