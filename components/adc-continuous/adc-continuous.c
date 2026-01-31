@@ -143,6 +143,8 @@ void adc_processing_task(void *pvParameters)
                 //          parsed_data[3].raw_data,
                 //          (uint8_t)(parsed_data[3].raw_data >> 4));
 
+
+                // для созранения данных после окончания задачи
                 memcpy(adc_data, raw_data, num_parsed_samples);
                 buffer_ready_callback(adc_data);
                 free(raw_data);
