@@ -11,7 +11,7 @@
 #include "cJSON.h"
 #include "esp_timer.h"
 
-#define OUTPUT_SAMPLE_BUFFER_SIZE (1024 / 2) // размер буфера с семплами для отправки клиенту
+#define OUTPUT_SAMPLE_BUFFER_SIZE (1024) // размер буфера с семплами для отправки клиенту
 #define MAX_WS_PAYLOAD (1024)
 #define CONFIG_HTTPD_MAX_OPEN_SOCKETS (2)
 

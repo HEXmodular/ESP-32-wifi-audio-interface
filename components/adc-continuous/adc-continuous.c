@@ -21,7 +21,7 @@
 #define READ_LEN 1024 //(8192)
 
 #if CONFIG_IDF_TARGET_ESP32
-static adc_channel_t channel[2] = {ADC_CHANNEL_6, ADC_CHANNEL_4};
+static adc_channel_t channel[4] = {ADC_CHANNEL_6, ADC_CHANNEL_7, ADC_CHANNEL_4, ADC_CHANNEL_5};
 #else
 static adc_channel_t channel[2] = {ADC_CHANNEL_2, ADC_CHANNEL_3};
 #endif
@@ -29,7 +29,6 @@ static adc_channel_t channel[2] = {ADC_CHANNEL_2, ADC_CHANNEL_3};
 static TaskHandle_t s_task_handle;
 static const char *TAG = "ADC-CONTINUOUS";
 static uint8_t adc_data[READ_LEN / 2];
-
 
 // Callback function pointer
 static void (*buffer_ready_callback)(uint8_t *samples) = NULL;
@@ -120,16 +119,30 @@ void adc_processing_task(void *pvParameters)
 
                 // uint8_t raw_data[num_parsed_samples];
                 uint8_t *raw_data = calloc(1, num_parsed_samples);
-                for (int i = 0; i < num_parsed_samples / 2; i++)
+                for (int i = 0; i < num_parsed_samples / 4; i++)
                 {
-                    raw_data[i] = (uint8_t)(parsed_data[i * 2].raw_data >> 4);
-
-                    raw_data[i + num_parsed_samples / 2] = (uint8_t)(parsed_data[i * 2 + 1].raw_data >> 4);
+                    raw_data[i] = (uint8_t)(parsed_data[i * 4].raw_data >> 4);
+                    raw_data[i + num_parsed_samples / 4] = (uint8_t)(parsed_data[i * 4 + 1].raw_data >> 4);
+                    raw_data[i + 2*num_parsed_samples / 4] = (uint8_t)(parsed_data[i * 4 + 2].raw_data >> 4);
+                    raw_data[i + 3*num_parsed_samples / 4] = (uint8_t)(parsed_data[i * 4 + 3].raw_data >> 4);
                 }
                 // 4095
+                // channel order is 7 6 5 4
 
                 // for (int i = 0; i < num_parsed_samples; i++)
 
+                // ESP_LOGI(TAG, "Samples: %d ADC%d, Channel: %d, Value: %" PRIu32 " Raw: %d",
+                //          num_parsed_samples,
+                //          parsed_data[0].unit + 1,
+                //          parsed_data[0].channel,
+                //          //  raw_data[0]);
+                //          parsed_data[0].raw_data,
+                //          (uint8_t)(parsed_data[0].raw_data >> 4));
+                // ESP_LOGI(TAG, "ADC%d, Channel: %d, Value: %" PRIu32 " Raw: %d",
+                //          parsed_data[1].unit + 1,
+                //          parsed_data[1].channel,
+                //          parsed_data[1].raw_data,
+                //          (uint8_t)(parsed_data[1].raw_data >> 4));
                 // ESP_LOGI(TAG, "Samples: %d ADC%d, Channel: %d, Value: %" PRIu32 " Raw: %d",
                 //          num_parsed_samples,
                 //          parsed_data[2].unit + 1,
@@ -142,7 +155,6 @@ void adc_processing_task(void *pvParameters)
                 //          parsed_data[3].channel,
                 //          parsed_data[3].raw_data,
                 //          (uint8_t)(parsed_data[3].raw_data >> 4));
-
 
                 // для созранения данных после окончания задачи
                 memcpy(adc_data, raw_data, num_parsed_samples);
